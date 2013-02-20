@@ -8,8 +8,8 @@ Gem::Specification.new do |gem|
   gem.version       = QuickNotify::VERSION
   gem.authors       = ["Alan Graham"]
   gem.email         = ["alan@productlab.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{Notification library for Ruby}
+  gem.summary       = %q{Notification library for Ruby}
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($/)
