@@ -20,7 +20,7 @@ module QuickNotify
   class << self
 
     def configure(opts)
-      @options = opts.with_indifferent_access
+      @options = opts.with_indifferent_access unless opts.nil?
       # set any default opts here
     end
 
