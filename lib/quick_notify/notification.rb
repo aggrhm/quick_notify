@@ -14,7 +14,8 @@ module QuickNotify
         n = self.new
         n.action = self.actions[action.to_sym]
         n.user = user
-        n.opts = opts
+        n.opts = opts[:opts]
+        n.delivery_vars = opts[:delivery_vars]
         saved = n.save
         if saved
           self.release_old_for(user.id)
@@ -23,15 +24,17 @@ module QuickNotify
       end
 
       def quick_notify_notification_keys_for(db)
-        key :ac, Integer
+        key :ac,  Integer
         key :uid, ObjectId
         key :oph, Hash
-        key :sls,  Array
+        key :sls, Array
+        key :dvs, Array
 
         attr_alias :action, :ac
         attr_alias :user_id, :uid
         attr_alias :opts, :oph
         attr_alias :status_log, :sls
+        attr_alias :delivery_vars, :dvs
 
         belongs_to :user, :foreign_key => :uid
 
@@ -110,6 +113,15 @@ module QuickNotify
 
     def action_sym
       self.class.actions.rassoc(self.action).first
+    end
+
+    def delivery_opts
+      ret = {}
+      ret['act'] = self.action
+      self.delivery_vars.each do |var|
+        ret[var] = self.opts[var]
+      end unless self.delivery_vars.nil?
+      return ret
     end
 
   end
