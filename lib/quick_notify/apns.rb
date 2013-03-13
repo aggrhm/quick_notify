@@ -47,10 +47,10 @@ module QuickNotify
     end
 
     def disconnect!
-      self.ssl.close
-      self.sock.close
-      self.sock = nil
-      self.ssl = nil
+      @ssl.close
+      @sock.close
+      @sock = nil
+      @ssl = nil
     end
 
     class Notification
