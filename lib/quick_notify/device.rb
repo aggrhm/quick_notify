@@ -10,18 +10,31 @@ module QuickNotify
     module ClassMethods
 
       def quick_notify_device_keys_for(db)
-        key :os,  Integer
-        key :tk,  String
-        key :pn,  String
-        key :did,  String
-        key :uid, ObjectId
+        if db == :mongomapper
+          key :os,  Integer
+          key :tk,  String
+          key :pn,  String
+          key :did,  String
+          key :uid, ObjectId
 
-        attr_alias :token, :tk
-        attr_alias :platform_notes, :pn
-        attr_alias :udid, :did
-        attr_alias :user_id, :uid
+          attr_alias :token, :tk
+          attr_alias :platform_notes, :pn
+          attr_alias :udid, :did
+          attr_alias :user_id, :uid
 
-        timestamps!
+          timestamps!
+
+        elsif db == :mongoid
+          field :os, type: Integer
+          field :tk, as: :token, type: String
+          field :pn, as: :platform_notes, type: String
+          field :did, as: :udid, type: String
+          field :uid, as: :user_id, type: Moped::BSON::ObjectId
+
+          mongoid_timestamps!
+
+        end
+
         enum_methods! :os, OS_TYPES
 
         scope :registered_to, lambda{|uid|

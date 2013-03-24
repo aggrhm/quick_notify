@@ -24,21 +24,32 @@ module QuickNotify
       end
 
       def quick_notify_notification_keys_for(db)
-        key :ac,  Integer
-        key :uid, ObjectId
-        key :oph, Hash
-        key :sls, Array
-        key :dvs, Array
+        if db == :mongomapper
+          key :ac,  Integer
+          key :uid, ObjectId
+          key :oph, Hash
+          key :sls, Array
+          key :dvs, Array
 
-        attr_alias :action, :ac
-        attr_alias :user_id, :uid
-        attr_alias :opts, :oph
-        attr_alias :status_log, :sls
-        attr_alias :delivery_vars, :dvs
+          attr_alias :action, :ac
+          attr_alias :user_id, :uid
+          attr_alias :opts, :oph
+          attr_alias :status_log, :sls
+          attr_alias :delivery_vars, :dvs
 
+          timestamps!
+
+        elsif db == :mongoid
+          field :ac, as: :action, type: Integer
+          field :uid, as: :user_id, type: Moped::BSON::ObjectId
+          field :oph, as: :opts, type: Hash
+          field :sls, as: :status_log, type: Array
+          field :dvs, as: :delivery_vars, type: Array
+
+          mongoid_timestamps!
+
+        end
         belongs_to :user, :foreign_key => :uid
-
-        timestamps!
       end
 
       def actions
