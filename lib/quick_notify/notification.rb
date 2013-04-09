@@ -43,7 +43,7 @@ module QuickNotify
           field :ac, as: :action, type: Integer
           field :uid, as: :user_id, type: Moped::BSON::ObjectId
           field :oph, as: :opts, type: Hash
-          field :sls, as: :status_log, type: Array
+          field :sls, as: :status_log, type: Array, default: []
           field :dvs, as: :delivery_vars, type: Array
 
           mongoid_timestamps!
