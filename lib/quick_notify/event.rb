@@ -115,7 +115,7 @@ module QuickNotify
       return unless self.body.nil?
       actor_s = self.meta["actor_name"] || self.actor_class
       receiver_s = self.meta["receiver_class"] || self.receiver_class
-      body = "#{actor_s} #{self.action} #{receiver_s}"
+      body = "#{actor_s} #{self.action} #{receiver_s.downcase}"
       body << " '#{self.meta["receiver_name"]}'" if self.meta["receiver_name"]
       body << " #{self.meta["fields"].join(', ')}" if self.meta["fields"]
       body << "."
