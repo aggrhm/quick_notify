@@ -109,6 +109,18 @@ module QuickNotify
       self.build_body
       self.state! :processed
       self.save
+
+      @process_handlers.each {|h| h.call(self)} unless @process_handlers.nil?
+    end
+
+    def run(blk)
+      @process_handlers ||= []
+      @process_handlers << blk
+    end
+
+    def set_body!(body)
+      self.body = body
+      self.save
     end
 
     def build_body
