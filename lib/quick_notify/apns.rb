@@ -18,12 +18,14 @@ module QuickNotify
       begin
         self.connect! unless self.connected?
         @ssl.write(data)
+        QuickNotify.log "QuickNotify::APNS:: Wrote #{data.length} bytes to #{self.host}:#{self.port}" 
         return true
       rescue Errno::EPIPE, OpenSSL::SSL::SSLError, Errno::ECONNRESET
         self.disconnect!
         if (retries -= 1) > 0
           retry
         else
+          QuickNotify.log "QuickNotify::APNS:: Failed to write #{data.length} bytes to #{self.host}:#{self.port} after 3 retries" 
           return false
         end
       end
@@ -74,6 +76,10 @@ module QuickNotify
         pt = self.packaged_token
         pm = self.packaged_message
         [0, 0, 32, pt, 0, pm.bytesize, pm].pack("ccca*cca*")
+      end
+
+      def size
+        self.package.length
       end
     
       def packaged_token
