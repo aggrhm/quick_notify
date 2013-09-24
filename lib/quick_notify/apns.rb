@@ -21,6 +21,7 @@ module QuickNotify
         QuickNotify.log "QuickNotify::APNS:: Wrote #{data.length} bytes to #{self.host}:#{self.port}" 
         return true
       rescue Errno::EPIPE, OpenSSL::SSL::SSLError, Errno::ECONNRESET
+        QuickNotify.log "QuickNotify::APNS:: Connection reset by Apple. Potentially due to error in last notification"
         self.disconnect!
         if (retries -= 1) > 0
           retry
