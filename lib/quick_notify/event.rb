@@ -7,11 +7,14 @@ module QuickNotify
     STATES = {:new => 1, :processed => 2}
 
     module ClassMethods
-      def add(actor, action, receiver, opts={})
+      def add(action, model, user, opts={})
         e = self.new
-        e.actor=actor
+        e.actor=user
         e.action=action.to_s
-        e.receiver=receiver
+        e.model=model
+
+        opts['user'] ||= user.to_api(:min)
+        opts['model'] ||= model.to_api(:min)
         e.meta = opts
         e.state! :new
         e.save
@@ -26,12 +29,12 @@ module QuickNotify
 
           field :ac, as: :actor_class, type: String
           field :ai, as: :actor_id, type: Moped::BSON::ObjectId
-          field :rc, as: :receiver_class, type: String
-          field :ri, as: :receiver_id, type: Moped::BSON::ObjectId
+          field :mc, as: :model_class, type: String
+          field :mi, as: :model_id, type: Moped::BSON::ObjectId
           field :at, as: :action, type: String
-          field :mth, as: :meta, type: Hash, default: {}
           field :st, as: :state, type: Integer
           field :bd, as: :body, type: String
+          field :mth, as: :meta, type: Hash, default: {}
 
           mongoid_timestamps!
 
@@ -49,11 +52,18 @@ module QuickNotify
         }
       end
 
-      def on_receiver(receiver_class, action=nil, &block)
+      def on_model(model, &block)
         handlers << {
-          receiver_class: receiver_class.to_s,
-          action: (action ? action.to_s : nil),
-          actor_class: nil,
+          model: model,
+          action: nil,
+          callback: block
+        }
+      end
+
+      def on_action(action, &block)
+        handlers << {
+          model: action[0, action.rindex('.')],
+          action: action,
           callback: block
         }
       end
@@ -67,30 +77,47 @@ module QuickNotify
     ## INSTANCE METHODS
 
     def actor=(m)
-      self.actor_class = m.class.to_s
-      self.actor_id = m.id
+      if m.nil?
+        self.actor_class = nil
+        self.actor_id = nil
+      else
+        self.actor_class = m.class.to_s
+        self.actor_id = m.id
+      end
     end
 
     def actor
-      cls = Object.const_get(self.actor_class)
-      cls.find(self.actor_id)
+      if self.actor_class.nil?
+        return nil
+      else
+        cls = Object.const_get(self.actor_class)
+        return cls.find(self.actor_id)
+      end
     end
 
-    def receiver=(m)
-      self.receiver_class = m.class.to_s
-      self.receiver_id = m.id
+    def model=(m)
+      self.model_class = m.class.to_s
+      self.model_id = m.id
     end
 
-    def receiver
-      cls = Object.const_get(self.receiver_class)
-      cls.find(self.receiver_id)
+    def model
+      cls = Object.const_get(self.model_class)
+      cls.find(self.model_id)
+    end
+
+    def action_model
+      self.action[0, self.action.rindex('.')]
+    end
+
+    def action_str
+      self.action[self.action.rindex('.')+1..-1]
     end
 
 
     def process
       # call handlers
       hs = self.class.handlers.select {|handler|
-        if handler[:receiver_class] == self.receiver_class
+        if handler[:model] == self.action_model
           if handler[:action] == nil
             true
           elsif handler[:action] == self.action
@@ -125,12 +152,17 @@ module QuickNotify
 
     def build_body
       return unless self.body.nil?
-      actor_s = self.meta["actor_name"] || self.actor_class
-      receiver_s = self.meta["receiver_class"] || self.receiver_class
-      body = "#{actor_s} #{self.action} #{receiver_s.downcase}"
-      body << " '#{self.meta["receiver_name"]}'" if self.meta["receiver_name"]
+      actor_s = self.actor ? self.actor.name : "Someone"
+      model_s = self.meta["model_class"] || self.action_model
+
+      body = "#{actor_s} #{self.action_str} #{model_s}"
+
+      body << " '#{self.meta["model_title"]}'" if self.meta["model_title"]
+
       body << " #{self.meta["fields"].join(', ')}" if self.meta["fields"]
+
       body << "."
+
       self.body = body
     end
 
@@ -139,7 +171,7 @@ module QuickNotify
       ret[:id] = self.id.to_s
       ret[:action] = self.action
       ret[:actor_class] = self.actor_class
-      ret[:receiver_class] = self.receiver_class
+      ret[:model_class] = self.model_class
       ret[:meta] = self.meta
       ret[:body] = self.body
       ret[:created_at] = self.created_at.utc.to_i
