@@ -4,6 +4,7 @@ require "quick_notify/device"
 require "quick_notify/apns"
 require "quick_notify/sender"
 require "quick_notify/event"
+require "quick_notify/eventable"
 
 module QuickNotify
   # Your code goes here...
