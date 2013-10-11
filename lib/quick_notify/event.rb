@@ -20,6 +20,14 @@ module QuickNotify
         e.save
         # run job to process
         Job.run_later :event, e, :process
+        Job.run_later :event, self, :cleanup
+      end
+
+      def cleanup
+        limit = QuickNotify.options[:event_limit] || 5000
+        while self.processed.count > limit
+          self.processed.asc(:created_at).first.destroy
+        end
       end
 
       def quick_notify_event_keys_for!(db)
@@ -113,6 +121,9 @@ module QuickNotify
       self.action[self.action.rindex('.')+1..-1]
     end
 
+    def actor_name
+      actor_s = self.actor ? self.actor.name : "Someone"
+    end
 
     def process
       # call handlers
@@ -152,10 +163,9 @@ module QuickNotify
 
     def build_body
       return unless self.body.nil?
-      actor_s = self.actor ? self.actor.name : "Someone"
       model_s = self.meta["model_class"] || self.action_model
 
-      body = "#{actor_s} #{self.action_str} #{model_s}"
+      body = "#{self.actor_name} #{self.action_str} #{model_s}"
 
       body << " '#{self.meta["model_title"]}'" if self.meta["model_title"]
 
