@@ -91,9 +91,13 @@ module QuickNotify
 
     def deliver_ios
       self.class.device_class.registered_to(self.user.id).running_ios.each do |device|
-        self.log_status(:ios, :sending, device.id)
-        ret = QuickNotify::Sender.send_ios_notification(device, self)
-        self.log_status(:ios, (ret == true ? :sent : :error), device.id)
+        if device.is_dormant?
+          device.unregister
+        else
+          self.log_status(:ios, :sending, device.id)
+          ret = QuickNotify::Sender.send_ios_notification(device, self)
+          self.log_status(:ios, (ret == true ? :sent : :error), device.id)
+        end
       end
     end
 
@@ -109,7 +113,7 @@ module QuickNotify
     ## OVERRIDES
 
     def platforms_for_delivery
-
+      return []
     end
 
     def message

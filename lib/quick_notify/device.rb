@@ -38,7 +38,7 @@ module QuickNotify
         enum_methods! :os, OS_TYPES
 
         scope :registered_to, lambda{|uid|
-          where(:uid => uid)
+          where(:uid => uid).desc(:updated_at)
         }
         scope :with_os, lambda{|os|
           os = OS_TYPES[os] if os.is_a? Symbol
@@ -65,6 +65,16 @@ module QuickNotify
         self.where(did: udid).destroy_all
       end
 
+    end
+
+    ## INSTANCE METHODS
+
+    def is_dormant?
+      self.updated_at < 1.month.ago
+    end
+
+    def unregister
+      self.destroy
     end
 
   end
