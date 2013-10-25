@@ -57,6 +57,7 @@ module QuickNotify
         d.udid = udid
         d.user_id = user.id
         d.token = token
+        d.updated_at = Time.now
         d.save
         return d
       end
