@@ -15,6 +15,48 @@ module QuickNotify
 
     def write(data)
       retries = 2
+
+      begin
+        # connect if not connected
+        self.connect! unless self.connected?
+
+        # try to write
+        @ssl.write(data)
+        @ssl.flush
+
+        # check if anything available to read (timeout in half a second)
+        if (result = IO.select([@ssl], nil, nil, 0.5))
+          if result[0]
+            bytes = @ssl.read(6)
+            if bytes.length == 6
+              # received response from Apple
+              resp = bytes.unpack('CCN')
+              QuickNotify.log "QuickNotify::APNS:: Received #{resp.to_s} from Apple Gateway. Disconnecting..."
+              raise "Received Apple Error Response"
+            end
+          end
+        end
+
+        # timeout reached
+        QuickNotify.log "QuickNotify::APNS:: Wrote #{data.length} bytes to #{self.host}:#{self.port}" 
+        return true
+
+      rescue Exception => e
+        QuickNotify.log "QuickNotify::APNS:: Connection reset by Apple (#{e.message}). Potentially due to error in last notification"
+        self.disconnect!
+        if (retries -= 1) > 0
+          retry
+        else
+          QuickNotify.log "QuickNotify::APNS:: Failed to write #{data.length} bytes to #{self.host}:#{self.port} after 3 attempts" 
+          return false
+        end
+
+      end
+
+    end
+
+    def write2(data)
+      retries = 2
       begin
         self.connect! unless self.connected?
         @ssl.write(data)
@@ -74,9 +116,18 @@ module QuickNotify
       end
           
       def package
-        pt = self.packaged_token
-        pm = self.packaged_message
-        [0, 0, 32, pt, 0, pm.bytesize, pm].pack("ccca*cca*")
+        items = []
+        items << self.packaged_token
+        items << self.packaged_message
+        items << self.packaged_identifier
+        items << self.packaged_expiration
+        items << self.packaged_priority
+
+        item_length = items.reduce(0) {|sz, item| sz += item.bytesize}
+
+        #[0, 0, 32, pt, 0, pm.bytesize, pm].pack("ccca*cca*")
+        frame = [2, item_length, items[0], items[1], items[2], items[3], items[4]].pack('CNa*a*a*a*a*')
+        return frame
       end
 
       def size
@@ -84,7 +135,7 @@ module QuickNotify
       end
     
       def packaged_token
-        [device_token.gsub(/[\s|<|>]/,'')].pack('H*')
+        [1, 32, self.device_token.gsub(/[\s|<|>]/,'')].pack('CnH64')
       end
     
       def packaged_message
@@ -93,7 +144,21 @@ module QuickNotify
         aps['aps']['badge'] = self.badge if self.badge
         aps['aps']['sound'] = self.sound if self.sound
         aps.merge!(self.other) if self.other
-        aps.to_json
+        str = aps.to_json
+        [2, str.bytesize, str].pack('Cna*')
+      end
+
+      def packaged_identifier
+        [3, 4, Time.now.to_i].pack('CnN')
+      end
+
+      def packaged_expiration
+        exp = Time.now + 1.day
+        [4, 4, exp.to_i].pack('CnN')
+      end
+
+      def packaged_priority
+        [5, 1, 10].pack('CnC')
       end
       
     end
