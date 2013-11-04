@@ -16,11 +16,13 @@ module QuickNotify
           key :pn,  String
           key :did,  String
           key :uid, ObjectId
+          key :a_at, Time
 
           attr_alias :token, :tk
           attr_alias :platform_notes, :pn
           attr_alias :udid, :did
           attr_alias :user_id, :uid
+          attr_alias :accessed_at, :a_at
 
           timestamps!
 
@@ -30,6 +32,7 @@ module QuickNotify
           field :pn, as: :platform_notes, type: String
           field :did, as: :udid, type: String
           field :uid, as: :user_id, type: Moped::BSON::ObjectId
+          field :a_at, as: :accessed_at, type: Time
 
           mongoid_timestamps!
 
@@ -38,7 +41,7 @@ module QuickNotify
         enum_methods! :os, OS_TYPES
 
         scope :registered_to, lambda{|uid|
-          where(:uid => uid).desc(:updated_at)
+          where(:uid => uid).desc(:a_at)
         }
         scope :with_os, lambda{|os|
           os = OS_TYPES[os] if os.is_a? Symbol
@@ -57,7 +60,7 @@ module QuickNotify
         d.udid = udid
         d.user_id = user.id
         d.token = token
-        d.updated_at = Time.now
+        d.accessed_at = Time.now
         d.save
         return d
       end
@@ -71,7 +74,7 @@ module QuickNotify
     ## INSTANCE METHODS
 
     def is_dormant?
-      self.updated_at < 1.month.ago
+      self.accessed_at < 1.month.ago
     end
 
     def unregister
