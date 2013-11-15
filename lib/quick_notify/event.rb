@@ -33,7 +33,7 @@ module QuickNotify
       def quick_notify_event_keys_for!(db)
         case db
         when :mongoid
-          include MongoHelper
+          include MongoHelper::Model
 
           field :ac, as: :actor_class, type: String
           field :ai, as: :actor_id, type: Moped::BSON::ObjectId

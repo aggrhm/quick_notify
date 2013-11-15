@@ -74,6 +74,8 @@ module QuickNotify
     ## INSTANCE METHODS
 
     def is_dormant?
+      return false if self.accessed_at.nil?
+
       self.accessed_at < 1.month.ago
     end
 
