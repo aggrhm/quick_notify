@@ -14,6 +14,11 @@ module QuickNotify
         n = self.new
         n.action = self.actions[action.to_sym]
         n.user = user
+        n.message = opts[:message]
+        n.short_message = opts[:short_message]
+        n.full_message = opts[:full_message]
+        n.subject = opts[:subject]
+        n.delivery_platforms = opts[:delivery_platforms]
         n.opts = opts[:opts]
         n.delivery_vars = opts[:delivery_vars]
         saved = n.save
@@ -42,6 +47,11 @@ module QuickNotify
         elsif db == :mongoid
           field :ac, as: :action, type: Integer
           field :uid, as: :user_id, type: Moped::BSON::ObjectId
+          field :rm, as: :message, type: String
+          field :sm, as: :short_message, type: String
+          field :fm, as: :full_message, type: String
+          field :sb, as: :subject, type: String
+          field :pfs, as: :delivery_platforms, type: Array, default: []
           field :oph, as: :opts, type: Hash
           field :sls, as: :status_log, type: Array, default: []
           field :dvs, as: :delivery_vars, type: Array
@@ -77,16 +87,25 @@ module QuickNotify
     ## DELIVERY
 
     def deliver
-      self.platforms_for_delivery.each do |plat|
-        case plat
+      self.delivery_platforms.each do |plat|
+        case plat.to_sym
         when :ios
           self.deliver_ios
+        when :email
+          self.deliver_email
         end
       end
     end
 
     def deliver_email
-
+      begin
+        QuickNotify::Mailer.notification_email(self).deliver
+        self.log_status(:email, :sent, self.user.email)
+      rescue Exception => e
+        self.log_status(:email, :error, self.user.email)
+        puts e
+        puts e.backtrace.join("\n\t")
+      end
     end
 
     def deliver_ios
@@ -108,20 +127,6 @@ module QuickNotify
     def log_status(plat, code, note=nil)
       self.status_log << {plat: plat, code: STATUS_CODES[code], note: note.to_s}
       self.save
-    end
-
-    ## OVERRIDES
-
-    def platforms_for_delivery
-      return []
-    end
-
-    def message
-
-    end
-
-    def subject
-
     end
 
     ## HELPERS

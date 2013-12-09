@@ -7,20 +7,23 @@ module QuickNotify
     STATES = {:new => 1, :processed => 2}
 
     module ClassMethods
-      def add(action, model, user, opts={})
+      def publish(action, model, user, publisher, opts={})
         e = self.new
         e.actor=user
         e.action=action.to_s
         e.model=model
+        e.publisher = publisher
 
-        opts['user'] ||= user.to_api(:min)
-        opts['model'] ||= model.to_api(:min)
-        e.meta = opts
+        e.meta.merge!(opts)
         e.state! :new
         e.save
         # run job to process
         Job.run_later :event, e, :process
         Job.run_later :event, self, :cleanup
+      end
+
+      def add(action, model, user, opts={})
+        self.publish(action, model, user, opts.delete(:publisher), opts)
       end
 
       def cleanup
@@ -39,6 +42,8 @@ module QuickNotify
           field :ai, as: :actor_id, type: Moped::BSON::ObjectId
           field :mc, as: :model_class, type: String
           field :mi, as: :model_id, type: Moped::BSON::ObjectId
+          field :pc, as: :publisher_class, type: String
+          field :pi, as: :publisher_id, type: Moped::BSON::ObjectId
           field :at, as: :action, type: String
           field :st, as: :state, type: Integer
           field :bd, as: :body, type: String
@@ -72,6 +77,14 @@ module QuickNotify
         handlers << {
           model: action[0, action.rindex('.')],
           action: action,
+          callback: block
+        }
+      end
+
+      def on_all(&block)
+        handlers << {
+          model: nil,
+          action: nil,
           callback: block
         }
       end
@@ -113,6 +126,16 @@ module QuickNotify
       cls.find(self.model_id)
     end
 
+    def publisher=(m)
+      self.publisher_class = m.class.to_s
+      self.publisher_id = m.id
+    end
+
+    def publisher
+      cls = Object.const_get(self.publisher_class)
+      cls.find(self.publisher_id)
+    end
+
     def action_model
       self.action[0, self.action.rindex('.')]
     end
@@ -136,19 +159,35 @@ module QuickNotify
           else
             false
           end
+        elsif handler[:model] == nil
+          true
         else
           false
         end
       }
       hs.each do |handler|
-        handler[:callback].call(self)
+        begin
+          handler[:callback].call(self)
+        rescue Exception => e
+          Rails.logger.info "------- APPEVENT EVENT HANDLER ERROR -------"
+          Rails.logger.info e
+          Rails.logger.info e.backtrace.join("\n\t")
+        end
       end
 
       self.build_body
       self.state! :processed
       self.save
 
-      @process_handlers.each {|h| h.call(self)} unless @process_handlers.nil?
+      @process_handlers.each {|h|
+        begin
+          h.call(self)
+        rescue Exception => e
+          Rails.logger.info "------- APPEVENT RUN HANDLER ERROR -------"
+          Rails.logger.info e
+          Rails.logger.info e.backtrace.join("\n\t")
+        end
+      } unless @process_handlers.nil?
     end
 
     def run(blk)
@@ -182,6 +221,7 @@ module QuickNotify
       ret[:action] = self.action
       ret[:actor_class] = self.actor_class
       ret[:model_class] = self.model_class
+      ret[:publisher_class] = self.publisher_class
       ret[:meta] = self.meta
       ret[:body] = self.body
       ret[:created_at] = self.created_at.utc.to_i
