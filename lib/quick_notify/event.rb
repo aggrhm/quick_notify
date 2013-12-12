@@ -46,7 +46,7 @@ module QuickNotify
           field :pi, as: :publisher_id, type: Moped::BSON::ObjectId
           field :at, as: :action, type: String
           field :st, as: :state, type: Integer
-          field :bd, as: :body, type: String
+          #field :bd, as: :body, type: String
           field :mth, as: :meta, type: Hash, default: {}
 
           mongoid_timestamps!
@@ -140,7 +140,7 @@ module QuickNotify
       self.action[0, self.action.rindex('.')]
     end
 
-    def action_str
+    def action_verb
       self.action[self.action.rindex('.')+1..-1]
     end
 
@@ -175,7 +175,7 @@ module QuickNotify
         end
       end
 
-      self.build_body
+      #self.build_body
       self.state! :processed
       self.save
 
@@ -195,30 +195,35 @@ module QuickNotify
       @process_handlers << blk
     end
 
-    def set_body!(body)
-      self.body = body
-      self.save
-    end
+    def body
+      # get actor name
+      if self.actor_id.nil?
+        actor_name = "Someone"
+      else
+        actor_name = self.actor.name
+      end
 
-    def build_body
-      return unless self.body.nil?
+      
       model_s = self.meta["model_class"] || self.action_model
 
-      body = "#{self.actor_name} #{self.action_str} #{model_s}"
+      str = "#{self.actor_name} #{self.action_verb} #{model_s}"
 
-      body << " '#{self.meta["model_title"]}'" if self.meta["model_title"]
+      str << " '#{self.meta["model_title"]}'" if self.meta["model_title"]
 
-      body << " #{self.meta["fields"].join(', ')}" if self.meta["fields"]
+      str << " #{self.meta["fields"].join(', ')}" if self.meta["fields"]
 
-      body << "."
+      str << "."
 
-      self.body = body
+      return str
     end
 
     def to_api(opt=:default)
       ret = {}
       ret[:id] = self.id.to_s
       ret[:action] = self.action
+      ret[:action_model] = self.action_model
+      ret[:action_verb] = self.action_verb
+      ret[:actor_id] = self.actor_id
       ret[:actor_class] = self.actor_class
       ret[:model_class] = self.model_class
       ret[:publisher_class] = self.publisher_class
