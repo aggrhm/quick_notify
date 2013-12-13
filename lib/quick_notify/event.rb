@@ -61,7 +61,7 @@ module QuickNotify
           where(:bd => {'$ne' => nil})
         }
         scope :published, lambda {
-          processed.with_body.desc(:created_at)
+          processed.desc(:created_at)
         }
       end
 
