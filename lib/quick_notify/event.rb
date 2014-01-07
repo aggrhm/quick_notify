@@ -206,13 +206,7 @@ module QuickNotify
       
       model_s = self.meta["model_class"] || self.action_model
 
-      str = "#{self.actor_name} #{self.action_verb} #{model_s}"
-
-      str << " '#{self.meta["model_title"]}'" if self.meta["model_title"]
-
-      str << " #{self.meta["fields"].join(', ')}" if self.meta["fields"]
-
-      str << "."
+      str = "#{self.actor_name} #{self.action_verb} a #{model_s}."
 
       return str
     end
