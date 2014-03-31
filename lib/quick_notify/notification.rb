@@ -46,7 +46,7 @@ module QuickNotify
 
         elsif db == :mongoid
           field :ac, as: :action, type: Integer
-          field :uid, as: :user_id, type: Moped::BSON::ObjectId
+          field :uid, as: :user_id
           field :rm, as: :message, type: String
           field :sm, as: :short_message, type: String
           field :fm, as: :full_message, type: String

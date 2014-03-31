@@ -31,7 +31,7 @@ module QuickNotify
           field :tk, as: :token, type: String
           field :pn, as: :platform_notes, type: String
           field :did, as: :udid, type: String
-          field :uid, as: :user_id, type: Moped::BSON::ObjectId
+          field :uid, as: :user_id
           field :a_at, as: :accessed_at, type: Time
 
           mongoid_timestamps!

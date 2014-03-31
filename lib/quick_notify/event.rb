@@ -39,11 +39,11 @@ module QuickNotify
           include MongoHelper::Model
 
           field :ac, as: :actor_class, type: String
-          field :ai, as: :actor_id, type: Moped::BSON::ObjectId
+          field :ai, as: :actor_id
           field :mc, as: :model_class, type: String
-          field :mi, as: :model_id, type: Moped::BSON::ObjectId
+          field :mi, as: :model_id
           field :pc, as: :publisher_class, type: String
-          field :pi, as: :publisher_id, type: Moped::BSON::ObjectId
+          field :pi, as: :publisher_id
           field :at, as: :action, type: String
           field :st, as: :state, type: Integer
           #field :bd, as: :body, type: String
