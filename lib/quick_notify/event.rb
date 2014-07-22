@@ -122,6 +122,7 @@ module QuickNotify
     end
 
     def model
+      return nil if self.model_class.nil?
       cls = Object.const_get(self.model_class)
       cls.find(self.model_id)
     end
@@ -137,10 +138,14 @@ module QuickNotify
     end
 
     def action_model
+      return nil if self.action.nil?
+      return nil if !self.action.include?('.')
       self.action[0, self.action.rindex('.')]
     end
 
     def action_verb
+      return nil if self.action.nil?
+      return self.action if !self.action.include?('.')
       self.action[self.action.rindex('.')+1..-1]
     end
 
@@ -223,7 +228,7 @@ module QuickNotify
       ret[:publisher_class] = self.publisher_class
       ret[:meta] = self.meta
       ret[:body] = self.body
-      ret[:created_at] = self.created_at.utc.to_i
+      ret[:created_at] = self.created_at.utc.to_i unless self.created_at.nil?
       return ret
     end
 
