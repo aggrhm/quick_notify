@@ -111,7 +111,7 @@ module QuickNotify
       if self.actor_class.nil?
         return nil
       else
-        cls = Object.const_get(self.actor_class)
+        cls = self.actor_class.constantize
         return cls.find(self.actor_id)
       end
     end
@@ -123,7 +123,7 @@ module QuickNotify
 
     def model
       return nil if self.model_class.nil?
-      cls = Object.const_get(self.model_class)
+      cls = self.model_class.constantize
       cls.find(self.model_id)
     end
 
@@ -133,7 +133,7 @@ module QuickNotify
     end
 
     def publisher
-      cls = Object.const_get(self.publisher_class)
+      cls = self.publisher_class.constantize
       cls.find(self.publisher_id)
     end
 
