@@ -201,18 +201,8 @@ module QuickNotify
     end
 
     def body
-      # get actor name
-      if self.actor_id.nil?
-        actor_name = "Someone"
-      else
-        actor_name = self.actor.name
-      end
-
-      
       model_s = self.meta["model_class"] || self.action_model
-
-      str = "#{self.actor_name} #{self.action_verb} a #{model_s}."
-
+      str = "#{model_s} #{self.action_verb}"
       return str
     end
 
