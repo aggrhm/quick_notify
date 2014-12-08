@@ -4,11 +4,15 @@ module QuickNotify
 
     def notification_email(notif)
       mail(
-        from: QuickNotify.options[:email][:from],
         to: notif.user.email,
         subject: notif.subject,
         body: notif.full_message || notif.message
       )
+    end
+
+    def app_email(opts)
+      @scope = opts[:scope]
+      mail(opts)
     end
 
   end

@@ -35,6 +35,7 @@ module QuickNotify
           user_name: @options[:email][:user_name],
           password: @options[:email][:password]
         }
+        QuickNotify::Mailer.default_options = {from: @options[:email][:from]}
       end
     end
 
