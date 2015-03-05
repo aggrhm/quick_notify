@@ -8,7 +8,10 @@ module QuickNotify
 
     def self.send_ios_notification(device, notif)
       # build data
-      data = {:alert => notif.message, :other => notif.delivery_opts}
+      sts = notif.delivery_settings_for(:ios)
+      meta = sts['metadata'] || {}
+      meta['act'] = notif.action
+      data = {:alert => notif.message, :other => meta}
       QuickNotify.log("QuickNotify::Sender:: Sending iOS notifcation to #{device.token}.")
       an = APNS::Notification.new(device.token, data)
       status = self.apns_instance.write(an.package)

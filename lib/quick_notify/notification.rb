@@ -19,8 +19,8 @@ module QuickNotify
         n.full_message = opts[:full_message]
         n.subject = opts[:subject]
         n.delivery_platforms = opts[:delivery_platforms]
-        n.opts = opts[:opts]
-        n.delivery_vars = opts[:delivery_vars]
+        n.meta = opts[:metadata]
+        n.delivery_settings = opts[:delivery_settings] || {}
         saved = n.save
         if saved
           self.release_old_for(user.id)
@@ -38,9 +38,8 @@ module QuickNotify
 
           attr_alias :action, :ac
           attr_alias :user_id, :uid
-          attr_alias :opts, :oph
+          attr_alias :meta, :oph
           attr_alias :status_log, :sls
-          attr_alias :delivery_vars, :dvs
 
           timestamps!
 
@@ -52,9 +51,9 @@ module QuickNotify
           field :fm, as: :full_message, type: String
           field :sb, as: :subject, type: String
           field :pfs, as: :delivery_platforms, type: Array, default: []
-          field :oph, as: :opts, type: Hash
+          field :oph, as: :meta, type: Hash
           field :sls, as: :status_log, type: Array, default: []
-          field :dvs, as: :delivery_vars, type: Array
+          field :dsh, as: :delivery_settings, type: Hash, default: {}
 
           mongoid_timestamps!
 
@@ -101,7 +100,7 @@ module QuickNotify
       begin
         QuickNotify::Mailer.notification_email(self).deliver
         self.log_status(:email, :sent, self.user.email)
-      rescue Exception => e
+      rescue => e
         self.log_status(:email, :error, self.user.email)
         puts e
         puts e.backtrace.join("\n\t")
@@ -135,13 +134,13 @@ module QuickNotify
       self.class.actions.rassoc(self.action).first
     end
 
-    def delivery_opts
-      ret = {}
-      ret['act'] = self.action
-      self.delivery_vars.each do |var|
-        ret[var] = self.opts[var]
-      end unless self.delivery_vars.nil?
-      return ret
+    def html_message
+      return nil if full_message.nil?
+      return full_message.gsub(/\n/, "<br>")
+    end
+
+    def delivery_settings_for(type)
+      return (self.delivery_settings[type.to_s] || {}).with_indifferent_access
     end
 
   end
