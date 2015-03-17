@@ -24,10 +24,10 @@ module QuickNotify
       text_body = opts[:text_body] || opts[:body]
       html_body = text_body.gsub(/\n/, "<br>")
 
-      mail(
-        to: opts[:to],
-        subject: opts[:subject],
-      ) do |format|
+      mail_opts = opts[:headers] || {}
+      mail_opts[:to] = opts[:to]
+      mail_opts[:subject] = opts[:subject]
+      mail(mail_opts) do |format|
         if has_html_template
           format.html { render html_tpl, layout: html_lay }
         elsif has_html_layout
