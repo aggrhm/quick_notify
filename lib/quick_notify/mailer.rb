@@ -22,7 +22,7 @@ module QuickNotify
       has_html_layout = !html_lay.nil?
 
       text_body = opts[:text_body] || opts[:body]
-      html_body = text_body.gsub(/\n/, "<br>")
+      html_body = QuickNotify.convert_text_to_html(text_body)
 
       mail_opts = opts[:headers] || {}
       mail_opts[:to] = opts[:to]

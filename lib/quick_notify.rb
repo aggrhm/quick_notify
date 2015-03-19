@@ -51,5 +51,16 @@ module QuickNotify
       end
     end
 
+    def convert_text_to_html(text)
+      # convert line breaks
+      html = text.gsub(/\n/, "<br>")
+
+      # convert links
+      URI::extract(html).each {|uri|
+        html.gsub!(uri, "<a href=\"#{uri}\">#{uri}</a>")
+      }
+      return html
+    end
+
   end
 end
