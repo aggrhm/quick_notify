@@ -56,7 +56,7 @@ module QuickNotify
       html = text.gsub(/\n/, "<br>")
 
       # convert links
-      URI::extract(html).each {|uri|
+      URI::extract(html, ["http", "https"]).each {|uri|
         html.gsub!(uri, "<a href=\"#{uri}\">#{uri}</a>")
       }
       return html
