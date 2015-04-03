@@ -27,10 +27,9 @@ module QuickNotify
       end
 
       def cleanup
-        limit = QuickNotify.options[:event_limit] || 5000
-        while self.processed.count > limit
-          self.processed.asc(:created_at).first.destroy
-        end
+        age_days = QuickNotify.options[:max_event_age] || 365
+        oldest_t = age_days.days.ago
+        self.processed.before(oldest_t).destroy_all
       end
 
       def quick_notify_event_keys_for!(db)
@@ -62,6 +61,9 @@ module QuickNotify
         }
         scope :published, lambda {
           processed.desc(:created_at)
+        }
+        scope :before, lambda {|time|
+          where('c_at' => {'$lt' => time})
         }
       end
 
