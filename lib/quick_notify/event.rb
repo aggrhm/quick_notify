@@ -214,8 +214,9 @@ module QuickNotify
       ret[:action] = self.action
       ret[:action_model] = self.action_model
       ret[:action_verb] = self.action_verb
-      ret[:actor_id] = self.actor_id
+      ret[:actor_id] = self.actor_id.to_s
       ret[:actor_class] = self.actor_class
+      ret[:model_id] = self.model_id.to_s
       ret[:model_class] = self.model_class
       ret[:publisher_class] = self.publisher_class
       ret[:meta] = self.meta
