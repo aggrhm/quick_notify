@@ -48,6 +48,9 @@ module QuickNotify
           #field :bd, as: :body, type: String
           field :mth, as: :meta, type: Hash, default: {}
 
+          field :cpid, as: :cluster_parent_id
+          field :cids, as: :cluster_children_ids, type: Array, default: []
+
           mongoid_timestamps!
 
           enum_methods! :state, STATES
@@ -64,6 +67,9 @@ module QuickNotify
         }
         scope :before, lambda {|time|
           where('c_at' => {'$lt' => time})
+        }
+        scope :is_cluster_parent, lambda {
+          where('cpid' => nil)
         }
       end
 
@@ -156,6 +162,9 @@ module QuickNotify
     end
 
     def process
+      # detect cluster
+      cl_evs = self.find_clustered_events
+      self.cluster_children_ids = cl_evs.collect(&:id)
       # call handlers
       hs = self.class.handlers.select {|handler|
         if handler[:model] == self.action_model
@@ -185,6 +194,10 @@ module QuickNotify
       #self.build_body
       self.state! :processed
       self.save
+      cl_evs.each {|ev|
+        ev.cluster_parent_id = self.id
+        ev.save
+      }
 
       @process_handlers.each {|h|
         begin
@@ -200,6 +213,11 @@ module QuickNotify
     def run(blk)
       @process_handlers ||= []
       @process_handlers << blk
+    end
+
+    def find_clustered_events
+      evs = AppEvent.where(ac: self.actor_class, ai: self.actor_id, mc: self.model_class, mi: self.model_id, pc: self.publisher_class, pi: self.publisher_id, at: self.action, c_at: {'$gte' => (self.created_at - 3.minutes)}).all
+      return evs.select{|ev| ev.id.to_s != self.id.to_s}
     end
 
     def body
@@ -222,6 +240,8 @@ module QuickNotify
       ret[:meta] = self.meta
       ret[:body] = self.body
       ret[:created_at] = self.created_at.utc.to_i unless self.created_at.nil?
+      ret[:cluster_parent_id] = self.cluster_parent_id ? self.cluster_parent_id.to_s : nil
+      ret[:cluster_children_ids] = self.cluster_children_ids.collect(&:to_s)
       return ret
     end
 
