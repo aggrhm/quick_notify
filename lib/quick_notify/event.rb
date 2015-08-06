@@ -7,21 +7,29 @@ module QuickNotify
     STATES = {:new => 1, :processed => 2}
 
     module ClassMethods
-      def publish(action, model, user, publisher, opts={})
-        e = self.new
-        e.actor=user
-        e.action=action.to_s
-        e.model=model
-        e.publisher = publisher
 
-        e.meta.merge!(opts)
+      def register(action, opts)
+        e = self.new
+        e.action = action
+        e.actor = opts[:actor]
+        e.model = opts[:model]
+        e.publisher = opts[:publisher]
+        e.meta = opts[:meta] || {}
+
         e.state! :new
         e.save
         # run job to process
         Job.run_later :event, e, :process
         Job.run_later :event, self, :cleanup
+        return e
+      end
+      
+      def publish(action, model, user, publisher, opts={})
+        self.register(action, {model: model, actor: user, publisher: publisher, meta: opts})
       end
 
+      ##
+      # NOTE: deprecated
       def add(action, model, user, opts={})
         self.publish(action, model, user, opts.delete(:publisher), opts)
       end
@@ -125,8 +133,13 @@ module QuickNotify
     end
 
     def model=(m)
-      self.model_class = m.class.to_s
-      self.model_id = m.id
+      if m.nil?
+        self.model_class = nil
+        self.model_id = nil
+      else
+        self.model_class = m.class.to_s
+        self.model_id = m.id
+      end
     end
 
     def model
@@ -136,8 +149,13 @@ module QuickNotify
     end
 
     def publisher=(m)
-      self.publisher_class = m.class.to_s
-      self.publisher_id = m.id
+      if m.nil?
+        self.publisher_class = nil
+        self.publisher_id = nil
+      else
+        self.publisher_class = m.class.to_s
+        self.publisher_id = m.id
+      end
     end
 
     def publisher
