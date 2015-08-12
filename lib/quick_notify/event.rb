@@ -73,6 +73,9 @@ module QuickNotify
         scope :published, lambda {
           processed.desc(:created_at)
         }
+        scope :with_action, lambda {|acs|
+          where('at' => {'$in' => acs})
+        }
         scope :before, lambda {|time|
           where('c_at' => {'$lt' => time})
         }
