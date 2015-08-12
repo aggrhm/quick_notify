@@ -17,6 +17,7 @@ module QuickNotify
         n.message = opts[:message]
         n.short_message = opts[:short_message]
         n.full_message = opts[:full_message]
+        n.html_message = opts[:html_message]
         n.subject = opts[:subject]
         n.delivery_platforms = opts[:delivery_platforms]
         n.meta = opts[:metadata]
@@ -49,6 +50,7 @@ module QuickNotify
           field :rm, as: :message, type: String
           field :sm, as: :short_message, type: String
           field :fm, as: :full_message, type: String
+          field :hm, as: :html_message, type: String
           field :sb, as: :subject, type: String
           field :pfs, as: :delivery_platforms, type: Array, default: []
           field :oph, as: :meta, type: Hash
@@ -132,11 +134,6 @@ module QuickNotify
 
     def action_sym
       self.class.actions.rassoc(self.action).first
-    end
-
-    def html_message
-      return nil if full_message.nil?
-      return full_message.gsub(/\n/, "<br>")
     end
 
     def delivery_settings_for(type)

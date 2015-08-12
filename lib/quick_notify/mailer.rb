@@ -7,6 +7,7 @@ module QuickNotify
       opts[:to] = notif.user.email
       opts[:subject] = notif.subject
       opts[:body] = notif.full_message || notif.message
+      opts[:html_body] = notif.html_message
       opts[:scope] = {notification: notif}
       app_email(opts)
 
