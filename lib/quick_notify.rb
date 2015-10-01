@@ -60,6 +60,7 @@ module QuickNotify
         @options[:classes].each do |k,v|
           ret[k.to_sym] = v.constantize
         end
+        ret
       end
     end
 
