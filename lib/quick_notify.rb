@@ -24,6 +24,21 @@ module QuickNotify
 
     def configure(opts)
       @options = opts.with_indifferent_access unless opts.nil?
+
+      setup_classes
+      setup_email
+    end
+
+    def options
+      @options ||= {}
+    end
+
+    def setup_classes
+      @options[:classes][:device] ||= '::Device'
+      @options[:classes][:event] ||= '::Event'
+    end
+
+    def setup_email
       # set any default opts here
       if @options[:email]
         QuickNotify::Mailer.raise_delivery_errors = true
@@ -39,8 +54,20 @@ module QuickNotify
       end
     end
 
-    def options
-      @options ||= {}
+    def models
+      @models ||= begin
+        ret = {}
+        @options[:classes].each do |k,v|
+          ret[k.to_sym] = v.constantize
+        end
+      end
+    end
+
+    def Device
+      self.models[:device]
+    end
+    def Event
+      self.models[:event]
     end
 
     def log(msg)

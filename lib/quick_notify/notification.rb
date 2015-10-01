@@ -13,6 +13,7 @@ module QuickNotify
       def add(user, action, opts)
         n = self.new
         n.action = self.actions[action.to_sym]
+        n.event = opts[:event] if opts[:event]
         n.user = user
         n.message = opts[:message]
         n.short_message = opts[:short_message]
@@ -20,7 +21,7 @@ module QuickNotify
         n.html_message = opts[:html_message]
         n.subject = opts[:subject]
         n.delivery_platforms = opts[:delivery_platforms]
-        n.meta = opts[:metadata]
+        n.meta = opts[:metadata] || {}
         n.delivery_settings = opts[:delivery_settings] || {}
         saved = n.save
         if saved
@@ -45,6 +46,7 @@ module QuickNotify
           timestamps!
 
         elsif db == :mongoid
+          include MongoHelper::Model
           field :ac, as: :action, type: Integer
           field :uid, as: :user_id
           field :rm, as: :message, type: String
@@ -56,6 +58,8 @@ module QuickNotify
           field :oph, as: :meta, type: Hash
           field :sls, as: :status_log, type: Array, default: []
           field :dsh, as: :delivery_settings, type: Hash, default: {}
+          field :eid, as: :event_id
+          field :ea, as: :event_action, type: String
 
           mongoid_timestamps!
 
@@ -64,15 +68,15 @@ module QuickNotify
       end
 
       def actions
-        @actions ||= {}
-      end
-
-      def device_class_is(cls)
-        @device_class = cls
+        @actions ||= {event: 1}
       end
 
       def device_class
-        @device_class || ::Device
+        QuickNotify.Device
+      end
+
+      def event_class
+        QuickNotify.Event
       end
 
       def add_action(act, val)
@@ -83,6 +87,24 @@ module QuickNotify
         self.delete_all(:uid => user_id, :created_at => {'$lte' => 30.days.ago})
       end
 
+    end
+
+    def event
+      return nil if self.event_id.nil?
+      @event ||= QuickNotify.Event.find(self.event_id)
+    end
+
+    def event=(ev)
+      if ev.nil?
+        self.event_id = nil
+        self.event_action = nil
+        @event = nil
+      else
+        self.event_id = ev.id
+        self.event_action = ev.action
+        @event = ev
+      end
+      @event
     end
 
     ## DELIVERY
@@ -110,7 +132,7 @@ module QuickNotify
     end
 
     def deliver_ios
-      self.class.device_class.registered_to(self.user.id).running_ios.each do |device|
+      QuickNotify.Device.registered_to(self.user.id).running_ios.each do |device|
         if device.is_dormant?
           device.unregister
         else
@@ -123,6 +145,10 @@ module QuickNotify
 
     def deliver_android
 
+    end
+
+    def metadata
+      return self.meta
     end
 
     def log_status(plat, code, note=nil)

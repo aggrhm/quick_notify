@@ -14,7 +14,7 @@ module QuickNotify
         e.actor = opts[:actor]
         e.model = opts[:model]
         e.publisher = opts[:publisher]
-        e.meta = opts[:meta] || {}
+        e.meta = opts[:meta] || opts[:metadata] {}
 
         e.state! :new
         e.save
@@ -23,9 +23,13 @@ module QuickNotify
         Job.run_later :event, self, :cleanup
         return e
       end
-      
-      def publish(action, model, user, publisher, opts={})
-        self.register(action, {model: model, actor: user, publisher: publisher, meta: opts})
+
+      def publish(action, model, user=nil, publisher=nil, opts={})
+        if model.is_a?(Hash)
+          self.register(action, model)
+        else
+          self.register(action, {model: model, actor: user, publisher: publisher, meta: opts})
+        end
       end
 
       ##
