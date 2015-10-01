@@ -6,12 +6,19 @@ QuickNotify is a flexible notification library built for Ruby On Rails. It provi
 
 Add this line to your application's Gemfile:
 
-		gem 'quick_notify', github: 'agquick/quick_notify'
-		gem 'mongo_helper', github: 'agquick/mongo_helper'
+```ruby
+gem 'quick_notify', github: 'agquick/quick_notify'
+gem 'mongo_helper', github: 'agquick/mongo_helper'
+gem 'quick_jobs', github: 'agquick/quick_jobs'
+```
 
 And then execute:
 
-		$ bundle install
+```term
+$ bundle install
+```
+
+---
 
 ## Usage
 
@@ -144,40 +151,65 @@ development:
 		html_layout: 'email.html.erb'
 ```
 
+---
+
 ## API
 
 ### Event
 
-**Class Methods**
+#### Class Methods
 
-`on_model(model_string) do |event|` - Declare action on certain event. The model should be the first part of the action string up to the period.
+**on_model(model_string) do |event|**
 
-`on_action(action) do |event|` - Declare action on certain event
+Declare action on certain event. The model should be the first part of the action string up to the period.
 
-`on_all do |event|` - Perform certain action on all events
+**on_action(action) do |event|**
 
-`publish(action, model, user, publisher, metadata={})` - Publish an event
+Declare action on certain event
 
-`publish(action, opts)` - Alternate method of publishing event
+**on_all do |event|**
 
-**Properties**
+Perform certain action on all events
 
-`action` - The action that occurred. It should have the form of {lowercase model name}.{lowercase action} (e.g. 'comment.created').
+**publish(action, model, user, publisher, metadata={})**
 
-`actor` - The object that committed the action (typically a User instance)
+Publish an event
 
-`model` - The model that was modified (can be any model in your app)
+**publish(action, opts)**
 
-`publisher` - The model that best encapsulates the scope of the event (for a Comment, it may be the Post the comment belongs to)
+Alternate method of publishing event
 
-`meta` - A hash of additional data to be stored with the event.
+#### Properties
+
+**action**
+
+The action that occurred. It should have the form of {lowercase model name}.{lowercase action} (e.g. 'comment.created').
+
+**actor**
+
+The object that committed the action (typically a User instance)
+
+**model**
+
+The model that was modified (can be any model in your app)
+
+**publisher**
+
+The model that best encapsulates the scope of the event (for a Comment, it may be the Post the comment belongs to)
+
+**meta**
+
+A hash of additional data to be stored with the event.
 
 ### Notification
 
-**Class Methods**
+#### Class Methods
 
-`add(user, action, options)` - Add notification for user with action.
+**add(user, action, options)**
 
+Add notification for user with action.
+
+---
 
 ## Contributing
 
