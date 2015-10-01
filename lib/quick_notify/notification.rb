@@ -137,7 +137,7 @@ module QuickNotify
     end
 
     def delivery_settings_for(type)
-      return (self.delivery_settings[type.to_s] || {}).with_indifferent_access
+      return (self.delivery_settings[type.to_s] || self.delivery_settings[type.to_sym] || {}).with_indifferent_access
     end
 
   end
