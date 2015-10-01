@@ -68,7 +68,7 @@ class Notification
 	include Mongoid::Document
 	include QuickNotify::Notification
 
-	quick_notify_notification_keys_for(:mongoid)
+	quick_notify_notification_keys_for!(:mongoid)
 
 	def self.add_for_event(event_id)
 		ev = AppEvent.find(event_id)

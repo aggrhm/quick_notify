@@ -30,7 +30,7 @@ module QuickNotify
         return n
       end
 
-      def quick_notify_notification_keys_for(db)
+      def quick_notify_notification_keys_for!(db)
         if db == :mongomapper
           key :ac,  Integer
           key :uid, ObjectId

@@ -14,7 +14,7 @@ module QuickNotify
         e.actor = opts[:actor]
         e.model = opts[:model]
         e.publisher = opts[:publisher]
-        e.meta = opts[:meta] || opts[:metadata] {}
+        e.meta = opts[:meta] || opts[:metadata] || {}
 
         e.state! :new
         e.save
@@ -24,11 +24,11 @@ module QuickNotify
         return e
       end
 
-      def publish(action, model, user=nil, publisher=nil, opts={})
+      def publish(action, model, actor=nil, publisher=nil, opts={})
         if model.is_a?(Hash)
           self.register(action, model)
         else
-          self.register(action, {model: model, actor: user, publisher: publisher, meta: opts})
+          self.register(action, {model: model, actor: actor, publisher: publisher, meta: opts})
         end
       end
 

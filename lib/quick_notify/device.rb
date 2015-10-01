@@ -9,7 +9,7 @@ module QuickNotify
 
     module ClassMethods
 
-      def quick_notify_device_keys_for(db)
+      def quick_notify_device_keys_for!(db)
         if db == :mongomapper
           key :os,  Integer
           key :tk,  String
@@ -27,6 +27,7 @@ module QuickNotify
           timestamps!
 
         elsif db == :mongoid
+          include MongoHelper::Model
           field :os, type: Integer
           field :tk, as: :token, type: String
           field :pn, as: :platform_notes, type: String
