@@ -39,10 +39,10 @@ class AppEvent
 
 	on_model 'comment' do |e|
 		comment = e.model
-		post	= comment.model
-		user = comment.actor
+		post = comment.post
+		user = comment.creator
 
-		e.meta['post'] = frame.to_api(:min) unless frame.nil?
+		e.meta['post'] = post.to_api(:min)
 	end
 
 	on_action 'comment.created' do |e|
