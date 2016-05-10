@@ -166,6 +166,7 @@ module QuickNotify
     end
 
     def publisher
+      return nil if self.publisher_class.nil?
       cls = self.publisher_class.constantize
       cls.find(self.publisher_id)
     end
