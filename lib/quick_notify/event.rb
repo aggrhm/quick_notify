@@ -78,6 +78,7 @@ module QuickNotify
           processed.desc(:created_at)
         }
         scope :with_action, lambda {|acs|
+          acs = [acs] unless acs.is_a?(Array)
           where('at' => {'$in' => acs})
         }
         scope :before, lambda {|time|
@@ -85,6 +86,15 @@ module QuickNotify
         }
         scope :is_cluster_parent, lambda {
           where('cpid' => nil)
+        }
+        scope :with_model, lambda {|cls, id|
+          where(mc: cls.to_s, mi: id)
+        }
+        scope :with_actor, lambda {|cls, id|
+          where(ac: cls.to_s, ai: id)
+        }
+        scope :with_publisher, lambda {|cls, id|
+          where(pc: cls.to_s, pi: id)
         }
       end
 
