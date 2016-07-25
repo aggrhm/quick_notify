@@ -64,7 +64,7 @@ module QuickNotify
           mongoid_timestamps!
 
         end
-        belongs_to :user, :foreign_key => :uid
+        belongs_to :user, :foreign_key => :uid, class_name: QuickScript.classes[:user]
       end
 
       def actions

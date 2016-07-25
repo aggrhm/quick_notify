@@ -1,4 +1,5 @@
 require "quick_notify/version"
+require "quick_notify/event_listener"
 require "quick_notify/notification"
 require "quick_notify/device"
 require "quick_notify/apns"
@@ -8,7 +9,7 @@ require "quick_notify/eventable"
 require "quick_notify/mailer"
 
 module QuickNotify
-  # Your code goes here...
+  include EventListener
 
   if defined?(Rails)
     # load configuration
@@ -36,6 +37,7 @@ module QuickNotify
     def setup_classes
       @options[:classes][:device] ||= '::Device'
       @options[:classes][:event] ||= '::Event'
+      @options[:classes][:user] ||= '::User'
     end
 
     def setup_email
@@ -48,19 +50,21 @@ module QuickNotify
           port: @options[:email][:port],
           domain: @options[:email][:domain],
           user_name: @options[:email][:user_name],
-          password: @options[:email][:password]
+          password: @options[:email][:password],
+          enable_starttls_auto: true
         }
+        QuickNotify::Mailer.smtp_settings[:enable_starttls_auto] = true if !QuickNotify::Mailer.smtp_settings.key?(:enable_starttls_auto)
         QuickNotify::Mailer.default_options = {from: @options[:email][:from]}
       end
     end
 
+    def classes
+      @options[:classes]
+    end
+
     def models
       @models ||= begin
-        ret = {}
-        @options[:classes].each do |k,v|
-          ret[k.to_sym] = v.constantize
-        end
-        ret
+        ModelMap.new(@options[:classes])
       end
     end
 
@@ -70,6 +74,9 @@ module QuickNotify
     def Event
       self.models[:event]
     end
+    def User
+      self.models[:user]
+    end
 
     def log(msg)
       if defined? Rails
@@ -78,6 +85,17 @@ module QuickNotify
         puts msg
       end
     end
+
+    def event_handlers
+      @event_handlers ||= []
+    end
+
+    def event_after_handlers
+      @event_after_handlers ||= []
+    end
+
+
+    ## utils
 
     def convert_text_to_html(text)
       # convert line breaks
@@ -90,5 +108,20 @@ module QuickNotify
       return html
     end
 
+
   end
+
+  class ModelMap
+
+    def initialize(classes)
+      @classes = classes
+    end
+
+    def [](val)
+      val = val.to_sym
+      return @classes[val].constantize
+    end
+
+  end
+    
 end

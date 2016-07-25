@@ -1,7 +1,9 @@
 module QuickNotify
   module Event
+
     def self.included(base)
-      base.extend ClassMethods
+      base.send :include, QuickNotify::EventListener
+      base.send :extend, ClassMethods
     end
 
     STATES = {:new => 1, :processed => 2}
@@ -98,32 +100,12 @@ module QuickNotify
         }
       end
 
-      def on_model(model, &block)
-        handlers << {
-          model: model,
-          action: nil,
-          callback: block
-        }
-      end
-
-      def on_action(action, &block)
-        handlers << {
-          model: action[0, action.rindex('.')],
-          action: action,
-          callback: block
-        }
-      end
-
       def on_all(&block)
-        handlers << {
+        QuickNotify.event_handlers << {
           model: nil,
           action: nil,
           callback: block
         }
-      end
-
-      def handlers
-        @handlers ||= []
       end
 
     end
@@ -202,7 +184,7 @@ module QuickNotify
       cl_evs = self.find_clustered_events
       self.cluster_children_ids = cl_evs.collect(&:id)
       # call handlers
-      hs = self.class.handlers.select {|handler|
+      hs = QuickNotify.event_handlers.select {|handler|
         if handler[:model] == self.action_model
           if handler[:action] == nil
             true
@@ -220,7 +202,7 @@ module QuickNotify
       hs.each do |handler|
         begin
           handler[:callback].call(self)
-        rescue Exception => e
+        rescue => e
           Rails.logger.info "------- APPEVENT EVENT HANDLER ERROR -------"
           Rails.logger.info e
           Rails.logger.info e.backtrace.join("\n\t")
@@ -235,20 +217,26 @@ module QuickNotify
         ev.save
       }
 
-      @process_handlers.each {|h|
+      # call after handlers
+
+      ahs = QuickNotify.event_after_handlers.select {|handler|
+        handler[:action] == self.action
+      }
+      ahs = ahs + (@process_handlers || [])
+      ahs.each {|handler|
         begin
-          h.call(self)
-        rescue Exception => e
+          handler[:callback].call(self)
+        rescue => e
           Rails.logger.info "------- APPEVENT RUN HANDLER ERROR -------"
           Rails.logger.info e
           Rails.logger.info e.backtrace.join("\n\t")
         end
-      } unless @process_handlers.nil?
+      }
     end
 
     def run(blk)
       @process_handlers ||= []
-      @process_handlers << blk
+      @process_handlers << {callback: blk}
     end
 
     def find_clustered_events
