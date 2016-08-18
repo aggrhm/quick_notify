@@ -122,7 +122,8 @@ module QuickNotify
 
     def deliver_email
       begin
-        QuickNotify::Mailer.notification_email(self).deliver
+        ml = QuickNotify::Mailer.notification_email(self)
+        ml.respond_to?(:deliver_now) ? ml.deliver_now : ml.deliver
         self.log_status(:email, :sent, self.user.email)
       rescue => e
         self.log_status(:email, :error, self.user.email)
