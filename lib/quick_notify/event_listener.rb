@@ -31,6 +31,13 @@ module QuickNotify
         end
       end
 
+      def after_action_with_model(model, &block)
+        QuickNotify.event_after_handlers << {
+          action_model: model
+          callback: block
+        }
+      end
+
     end
   end
 

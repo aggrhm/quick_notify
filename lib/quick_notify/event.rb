@@ -220,7 +220,7 @@ module QuickNotify
       # call after handlers
 
       ahs = QuickNotify.event_after_handlers.select {|handler|
-        handler[:action] == self.action
+        handler[:action] == self.action || handler[:action_model] == self.action_model
       }
       ahs = ahs + (@process_handlers || [])
       ahs.each {|handler|
