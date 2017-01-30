@@ -64,7 +64,6 @@ module QuickNotify
           mongoid_timestamps!
 
         end
-        belongs_to :user, :foreign_key => :uid, class_name: QuickNotify.classes[:user]
       end
 
       def actions
@@ -90,7 +89,7 @@ module QuickNotify
     end
 
     def event
-      return nil if self.event_id.nil?
+      return nil if self.event_id.blank?
       @event ||= QuickNotify.Event.find(self.event_id)
     end
 
@@ -105,6 +104,22 @@ module QuickNotify
         @event = ev
       end
       @event
+    end
+
+    def user
+      return nil if self.user_id.blank?
+      @user ||= QuickNotify.User.find(self.user_id)
+    end
+
+    def user=(u)
+      if u.nil?
+        self.user_id = nil
+        @user = nil
+      else
+        self.user_id = u.id
+        @user = u
+      end
+      @user
     end
 
     ## DELIVERY
