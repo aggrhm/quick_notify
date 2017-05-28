@@ -24,6 +24,7 @@ module QuickNotify
 
       text_body = opts[:text_body] || opts[:body]
       html_body = opts[:html_body] || QuickNotify.convert_text_to_html(text_body)
+      has_html_body = !html_body.nil?
 
       mail_opts = opts[:headers] || {}
       mail_opts[:to] = opts[:to]
@@ -31,7 +32,7 @@ module QuickNotify
       mail(mail_opts) do |format|
         if has_html_template
           format.html { render html_tpl, layout: html_lay }
-        elsif has_html_layout
+        elsif has_html_body
           format.html { render text: html_body, layout: html_lay }
         end
         if !text_body.nil?
