@@ -1,3 +1,4 @@
+require "erb"
 require "quick_notify/version"
 require "quick_notify/event_listener"
 require "quick_notify/notification"
@@ -16,7 +17,10 @@ module QuickNotify
     class Railtie < Rails::Railtie
       initializer "quick_notify.configure" do
         config_file = Rails.root.join("config", "quick_notify.yml")
-        QuickNotify.configure(YAML.load_file(config_file)[Rails.env]) if File.exists?(config_file)
+        if File.exists?(config_file)
+          template = ERB.new(File.new(config_file).read).result(binding)
+          QuickNotify.configure(YAML.load(template)[Rails.env])
+        end
       end
     end
   end
