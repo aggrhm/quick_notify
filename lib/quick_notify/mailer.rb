@@ -28,6 +28,8 @@ module QuickNotify
 
       mail_opts = opts[:headers] || {}
       mail_opts[:to] = opts[:to]
+      mail_opts[:cc] = opts[:cc] if opts[:cc]
+      mail_opts[:bcc] = opts[:bcc] if opts[:bcc]
       mail_opts[:subject] = opts[:subject]
       mail(mail_opts) do |format|
         if has_html_template
