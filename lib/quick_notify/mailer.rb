@@ -35,7 +35,7 @@ module QuickNotify
         if has_html_template
           format.html { render html_tpl, layout: html_lay }
         elsif has_html_body
-          format.html { render text: html_body, layout: html_lay }
+          format.html { render body: html_body, layout: html_lay }
         end
         if !text_body.nil?
           format.text { render text: text_body }
