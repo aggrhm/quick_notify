@@ -26,7 +26,7 @@ module QuickNotify
       html_body = opts[:html_body] || QuickNotify.convert_text_to_html(text_body)
       has_html_body = !html_body.nil?
 
-      mail_opts = opts[:headers] || {}
+      mail_opts = (QuickNotify.options[:email][:headers] || {}).merge( opts[:headers] || {} )
       mail_opts[:to] = opts[:to]
       mail_opts[:cc] = opts[:cc] if opts[:cc]
       mail_opts[:bcc] = opts[:bcc] if opts[:bcc]
